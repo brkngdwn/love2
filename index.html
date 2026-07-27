@@ -12,7 +12,6 @@
     }
     body {
       min-height: 100vh;
-      background: #1a0b14;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -21,6 +20,7 @@
       position: relative;
       overflow: hidden;
       touch-action: pan-y;
+      transition: background 1.5s ease;
     }
     #bg-layer {
       position: fixed;
@@ -31,10 +31,20 @@
       z-index: 0;
       pointer-events: none;
       overflow: hidden;
+      transition: background 1.5s ease;
     }
-    .bg-heart {
+    #celestial {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      font-size: 48px;
+      z-index: 5;
+      pointer-events: none;
+      text-shadow: 0 0 40px rgba(255, 200, 100, 0.3);
+      transition: all 1.5s ease;
+    }
+    .bg-heart, .bg-star {
       position: absolute;
-      font-size: 20px;
       animation: floatUp linear infinite;
       opacity: 0.3;
     }
@@ -50,13 +60,14 @@
       -webkit-backdrop-filter: blur(20px);
       padding: 28px 22px 34px;
       border-radius: 48px;
-      border: 1px solid rgba(255, 180, 200, 0.3);
+      border: 1px solid rgba(255, 180, 200, 0.25);
       max-width: 440px;
       width: 100%;
       text-align: center;
       position: relative;
       z-index: 2;
       margin: 20px 0 40px;
+      transition: border-color 1s ease, box-shadow 1s ease;
     }
     #maze-container {
       width: 100%;
@@ -64,10 +75,11 @@
       max-width: 340px;
       margin: 0 auto 14px;
       touch-action: none;
-      background: rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.1);
       border-radius: 32px;
       overflow: hidden;
       border: 2px solid rgba(255, 150, 180, 0.15);
+      transition: border-color 1s ease;
     }
     #mazeCanvas {
       width: 100%;
@@ -79,15 +91,17 @@
       min-height: 80px;
       margin: 12px 0 10px;
       padding: 14px;
-      background: rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.12);
       border-radius: 28px;
       border: 1px solid rgba(255, 150, 180, 0.1);
+      transition: border-color 1s ease;
     }
     #phrase-text {
       font-size: 20px;
       font-weight: 600;
       line-height: 1.5;
       color: #ffccdd;
+      transition: color 1s ease;
     }
     .phrase-small {
       font-size: 14px;
@@ -95,6 +109,7 @@
       opacity: 0.7;
       margin-top: 6px;
       color: #ffccdd;
+      transition: color 1s ease;
     }
     .btn-group {
       display: flex;
@@ -110,7 +125,7 @@
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.06);
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
       touch-action: manipulation;
@@ -118,13 +133,14 @@
       flex: 1 1 auto;
       min-width: 100px;
       color: #ffccdd;
+      transition: all 0.2s ease, background 1s ease, border-color 1s ease, color 1s ease;
     }
     .btn:active {
       transform: scale(0.94);
       background: rgba(255, 77, 109, 0.2);
     }
     .btn-primary {
-      background: rgba(255, 77, 109, 0.2);
+      background: rgba(255, 77, 109, 0.15);
       border-color: #ff4d6d;
       color: #ffaabc;
     }
@@ -146,6 +162,7 @@
       font-family: inherit;
       resize: none;
       height: 70px;
+      transition: border-color 1s ease, background 1s ease;
     }
     #reply-block textarea:focus {
       outline: none;
@@ -155,6 +172,9 @@
       background: #ff4d6d;
       color: white;
       border: none;
+    }
+    .btn-send:active {
+      background: #e03a5a;
     }
     .burst {
       position: fixed;
@@ -167,15 +187,33 @@
       0% { transform: scale(0.3) translate(0,0); opacity: 1; }
       100% { transform: scale(2) translate(var(--tx), var(--ty)); opacity: 0; }
     }
+    #day-counter {
+      margin-top: 18px;
+      font-size: 15px;
+      color: rgba(255, 220, 230, 0.6);
+      border-top: 1px solid rgba(255, 150, 180, 0.1);
+      padding-top: 16px;
+      transition: color 1s ease;
+    }
     @media (max-width: 480px) {
       .card { padding: 20px 16px 26px; border-radius: 36px; }
       #phrase-text { font-size: 18px; }
       .btn { font-size: 14px; padding: 10px 16px; min-width: 80px; }
+      #celestial { font-size: 36px; top: 16px; right: 16px; }
+      #day-counter { font-size: 13px; }
+    }
+    @media (max-width: 380px) {
+      #phrase-text { font-size: 16px; }
+      .btn { font-size: 13px; padding: 8px 12px; }
+      #celestial { font-size: 30px; top: 12px; right: 12px; }
+      #day-counter { font-size: 12px; }
     }
   </style>
 </head>
 <body>
+
 <div id="bg-layer"></div>
+<div id="celestial"></div>
 
 <div class="card">
   <div id="maze-container">
@@ -196,13 +234,20 @@
     <textarea id="replyText" placeholder="Напиши что-нибудь..."></textarea>
     <button class="btn btn-send" id="sendReplyBtn">📨 Отправить</button>
   </div>
+
+  <!-- СЧЁТЧИК ДНЕЙ -->
+  <div id="day-counter">❤️ С того дня, как я тебя увидела, прошло 0 дней</div>
 </div>
 
 <script>
-  // ТВОЙ НИК В ТЕЛЕГРАМЕ
+  // =======================================================
+  // 1. ТВОЙ НИК В ТЕЛЕГРАМЕ
+  // =======================================================
   const YOUR_TG = 'bmw1over';
 
-  // ФРАЗЫ (38 штук)
+  // =======================================================
+  // 2. ВСЕ ФРАЗЫ (38 штук)
+  // =======================================================
   const PHRASES = [
     'Когда я просыпаюсь и думаю о тебе, день сразу становится легче. Ты — первая мысль, и она самая тёплая.',
     'Ты справляешься, даже когда тяжело. Я знаю это, потому что ты — мой большой и сильный медвежонок. А ещё я знаю, что внутри ты мягкий, как пирожочек.',
@@ -244,7 +289,74 @@
     'Я хочу, чтобы ты знал: я всегда здесь. Даже когда я молчу, я думаю о тебе.'
   ];
 
-  // ПРОСТОЙ ЛАБИРИНТ 3x3
+  // =======================================================
+  // 3. ОФОРМЛЕНИЕ В ЗАВИСИМОСТИ ОТ ВРЕМЕНИ
+  // =======================================================
+  function getTimeTheme(hours) {
+    if (hours >= 6 && hours < 12) return 'morning';
+    if (hours >= 12 && hours < 17) return 'day';
+    if (hours >= 17 && hours < 21) return 'evening';
+    return 'night';
+  }
+
+  function applyTheme(theme) {
+    const bg = document.getElementById('bg-layer');
+    const celestial = document.getElementById('celestial');
+    if (theme === 'morning') {
+      bg.style.background = 'linear-gradient(145deg, #fce4d6, #f8d5c0)';
+      celestial.textContent = '☀️';
+      celestial.style.color = '#f5a623';
+      celestial.style.textShadow = '0 0 60px rgba(245, 166, 35, 0.4)';
+    } else if (theme === 'day') {
+      bg.style.background = 'linear-gradient(145deg, #fce4d6, #fad5b8)';
+      celestial.textContent = '🌤️';
+      celestial.style.color = '#f5a623';
+      celestial.style.textShadow = '0 0 40px rgba(245, 166, 35, 0.3)';
+    } else if (theme === 'evening') {
+      bg.style.background = 'linear-gradient(145deg, #2d1a22, #3d1a2a)';
+      celestial.textContent = '🌅';
+      celestial.style.color = '#ff7e5f';
+      celestial.style.textShadow = '0 0 60px rgba(255, 126, 95, 0.4)';
+    } else {
+      bg.style.background = 'linear-gradient(145deg, #0d0a18, #1a0b1f)';
+      celestial.textContent = '🌙';
+      celestial.style.color = '#e8d5f5';
+      celestial.style.textShadow = '0 0 60px rgba(232, 213, 245, 0.3)';
+    }
+    updateBgElements(theme);
+  }
+
+  function updateBgElements(theme) {
+    const container = document.getElementById('bg-layer');
+    const old = container.querySelectorAll('.bg-heart, .bg-star');
+    old.forEach(el => el.remove());
+    const isNight = theme === 'night';
+    const isEvening = theme === 'evening';
+    const count = 20;
+    const emojis = (isNight || isEvening) 
+      ? ['✦', '✧', '·', '⋆', '☆'] 
+      : ['❤️', '💖', '💗', '🌸', '✨'];
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('span');
+      el.className = (isNight || isEvening) ? 'bg-star' : 'bg-heart';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = Math.random() * 100 + '%';
+      el.style.top = Math.random() * 100 + '%';
+      el.style.fontSize = (isNight ? 12 : 16) + Math.random() * 20 + 'px';
+      if (isNight || isEvening) {
+        el.style.animationDuration = (8 + Math.random() * 12) + 's';
+        el.style.animationDelay = Math.random() * 10 + 's';
+      } else {
+        el.style.animationDuration = (12 + Math.random() * 15) + 's';
+        el.style.animationDelay = Math.random() * 12 + 's';
+      }
+      container.appendChild(el);
+    }
+  }
+
+  // =======================================================
+  // 4. ЛАБИРИНТ
+  // =======================================================
   const mazeData = [
     [0, 1, 0],
     [0, 0, 0],
@@ -270,17 +382,18 @@
   function drawMaze() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const cs = cellSize;
-    const theme = document.body.className.includes('morning') ? 'morning' : 'night';
-    const isDark = theme === 'night';
-    const fill = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-    const stroke = isDark ? 'rgba(255,200,220,0.2)' : 'rgba(0,0,0,0.1)';
+    const theme = document.body.className.replace('theme-', '') || 'night';
+    const isDark = (theme === 'night' || theme === 'evening');
+    const fillLight = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+    const fillWall = isDark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.15)';
+    const stroke = isDark ? 'rgba(255,200,220,0.15)' : 'rgba(0,0,0,0.08)';
 
     for (let row = 0; row < mazeSize; row++) {
       for (let col = 0; col < mazeSize; col++) {
         const x = col * cs;
         const y = row * cs;
         const val = mazeData[row][col];
-        ctx.fillStyle = val === 0 ? fill : 'rgba(0,0,0,0.25)';
+        ctx.fillStyle = val === 0 ? fillLight : fillWall;
         ctx.fillRect(x, y, cs, cs);
         ctx.strokeStyle = stroke;
         ctx.lineWidth = 1;
@@ -288,26 +401,24 @@
       }
     }
 
-    // Цель — сердечко в центре (1,1)
     const cx = 1 * cs + cs/2;
     const cy = 1 * cs + cs/2;
-    ctx.fillStyle = '#ff4d6d';
+    const heartColor = (theme === 'morning' || theme === 'day') ? '#e07a5f' : '#ff4d6d';
+    ctx.fillStyle = heartColor;
     ctx.font = (cs * 0.7) + 'px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('❤️', cx, cy);
 
-    // Игрок
     const px = playerPos.x * cs + cs/2;
     const py = playerPos.y * cs + cs/2;
-    ctx.fillStyle = '#ffb3c6';
+    ctx.fillStyle = (theme === 'morning' || theme === 'day') ? '#d48a6f' : '#ffb3c6';
     ctx.font = (cs * 0.5) + 'px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('🐾', px, py);
   }
 
-  // Обработка свайпов
   let touchStartX = 0, touchStartY = 0;
   let touchStartPlayer = null;
 
@@ -360,7 +471,9 @@
   canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
   window.addEventListener('resize', resizeCanvas);
 
-  // Функции
+  // =======================================================
+  // 5. ВЗРЫВЫ
+  // =======================================================
   function burstHearts(count) {
     const emojis = ['❤️','💖','💗','💓','🌸','✨','💕','🩷','💋','🥰','💞','🌟','🧡','💘','🐱','😺'];
     for (let i = 0; i < count; i++) {
@@ -379,6 +492,9 @@
     }
   }
 
+  // =======================================================
+  // 6. ФРАЗЫ
+  // =======================================================
   function getDayIndex() {
     const now = new Date();
     const start = new Date(2023, 9, 5);
@@ -392,6 +508,21 @@
     document.getElementById('phrase-day').textContent = '❤️ Твоя фраза на сегодня';
   }
 
+  // =======================================================
+  // 7. СЧЁТЧИК ДНЕЙ
+  // =======================================================
+  function updateDayCounter() {
+    const start = new Date(2023, 9, 5);
+    const now = new Date();
+    const diff = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+    document.getElementById('day-counter').textContent =
+      '❤️ С того дня, как я тебя увидела, прошло ' + diff + ' дней';
+  }
+  updateDayCounter();
+
+  // =======================================================
+  // 8. КНОПКИ
+  // =======================================================
   let extraIndex = 0;
   document.getElementById('extraPhraseBtn').addEventListener('click', function() {
     if (!mazeSolved) {
@@ -405,7 +536,6 @@
     burstHearts(15);
   });
 
-  // Кнопка "Написать мне"
   document.getElementById('replyBtn').addEventListener('click', function() {
     const block = document.getElementById('reply-block');
     block.style.display = block.style.display === 'flex' ? 'none' : 'flex';
@@ -424,11 +554,21 @@
     });
   });
 
-  // Запуск
+  // =======================================================
+  // 9. ЗАПУСК
+  // =======================================================
+  const now = new Date();
+  const hours = now.getHours();
+  const theme = getTimeTheme(hours);
+  document.body.className = 'theme-' + theme;
+  applyTheme(theme);
   resizeCanvas();
+
   playerPos = { x: 0, y: 0 };
   mazeSolved = false;
   drawMaze();
+
+  console.log('🌞 Лабиринт с солнцем и счётчиком загружен!');
 </script>
 </body>
 </html>
