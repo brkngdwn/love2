@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Лабиринт для тебя</title>
+  <style>
+    /* ===== ОБЩИЕ СТИЛИ ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      min-height: 100vh;
+      background: #1a0b14;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+      touch-action: pan-y;
+      transition: background 1.5s ease;
+    }
+    /* ===== ФОНОВЫЕ ЭЛЕМЕНТЫ ===== */
+    #bg-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      transition: background 1.5s ease;
+    }
+    .bg-heart {
+      position: absolute;
+      font-size: 20px;
+      animation: floatUp linear infinite;
+      opacity: 0.3;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.4; }
+      90% { opacity: 0.4; }
+      100% { transform: translateY(-20vh) rotate(720deg); opacity: 0; }
+    }
+    .bg-star {
+      position: absolute;
+      font-size: 18px;
+      animation: twinkle 3s ease-in-out infinite alternate;
+      opacity: 0.2;
+    }
+    @keyframes twinkle {
+      0% { opacity: 0.1; transform: scale(0.8); }
+      100% { opacity: 0.6; transform: scale(1.2); }
+    }
+    /* ===== ОСНОВНАЯ КАРТА ===== */
+    .card {
+      background: rgba(255, 240, 245, 0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 28px 22px 34px;
+      border-radius: 48px;
+      border: 1px solid rgba(255, 180, 200, 0.3);
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+      position: relative;
+      z-index: 2;
+      margin: 20px 0 40px;
+      transition: border-color 1s ease, box-shadow 1s ease;
+    }
+    .city-line {
+      color: rgba(255, 220, 230, 0.7);
+      font-size: 16px;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      font-weight: 400;
+    }
+    .time-line {
+      color: #ffccdd;
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 14px;
+      background: rgba(255,255,255,0.05);
+      padding: 8px 16px;
+      border-radius: 40px;
+      display: inline-block;
+      border: 1px solid rgba(255, 150, 180, 0.15);
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      transition: color 1s ease;
+    }
+    .sub {
+      font-size: 17px;
+      font-weight: 400;
+      margin-bottom: 18px;
+      border-bottom: 1px solid rgba(255, 150, 180, 0.15);
+      padding-bottom: 14px;
+      transition: color 1s ease;
+    }
+    .counter {
+      font-size: 18px;
+      font-weight: 600;
+      padding: 8px 20px;
+      border-radius: 40px;
+      display: inline-block;
+      margin-bottom: 18px;
+      border: 1px solid rgba(255, 150, 180, 0.2);
+      transition: color 1s ease, border-color 1s ease;
+    }
+    /* ===== ЛАБИРИНТ ===== */
+    #maze-container {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-width: 340px;
+      margin: 0 auto 14px;
+      position: relative;
+      touch-action: none;
+      background: rgba(0,0,0,0.15);
+      border-radius: 32px;
+      overflow: hidden;
+      border: 2px solid rgba(255, 150, 180, 0.15);
+      transition: border-color 1s ease;
+    }
+    #mazeCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: transparent;
+    }
+    /* ===== ФРАЗА ДНЯ ===== */
+    #phrase-block {
+      min-height: 80px;
+      margin: 12px 0 10px;
+      padding: 14px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 150, 180, 0.1);
+      transition: all 1s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    #phrase-text {
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1.5;
+      transition: color 1s ease;
+    }
+    .phrase-small {
+      font-size: 14px;
+      font-weight: 400;
+      opacity: 0.7;
+      margin-top: 6px;
+    }
+    /* ===== КНОПКИ ===== */
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 14px;
+    }
+    .btn {
+      padding: 12px 22px;
+      border: none;
+      border-radius: 40px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+      border: 1px solid rgba(255, 150, 180, 0.15);
+      flex: 1 1 auto;
+      min-width: 100px;
+      color: #ffccdd;
+    }
+    .btn:active {
+      transform: scale(0.94);
+      background: rgba(255, 77, 109, 0.2);
+    }
+    .btn-primary {
+      background: rgba(255, 77, 109, 0.2);
+      border-color: #ff4d6d;
+      color: #ffaabc;
+    }
+    .btn-primary:active {
+      background: rgba(255, 77, 109, 0.35);
+    }
+    /* ===== ОТВЕТНОЕ ПОЛЕ ===== */
+    #reply-block {
+      margin-top: 14px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      text-align: left;
+    }
+    #reply-block textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 150, 180, 0.25);
+      background: rgba(255,255,255,0.05);
+      color: #ffccdd;
+      font-size: 16px;
+      font-family: inherit;
+      resize: none;
+      height: 70px;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    #reply-block textarea:focus {
+      outline: none;
+      border-color: #ff4d6d;
+    }
+    .btn-send {
+      background: #ff4d6d;
+      color: white;
+      border: none;
+    }
+    .btn-send:active {
+      background: #e03a5a;
+    }
+    /* ===== ВСПЛЫВАЮЩИЕ ЧАСТИЦЫ ===== */
+    .burst {
+      position: fixed;
+      pointer-events: none;
+      font-size: 36px;
+      z-index: 999;
+      animation: burstAnim 1s ease-out forwards;
+    }
+    @keyframes burstAnim {
+      0% { transform: scale(0.3) translate(0,0); opacity: 1; }
+      100% { transform: scale(2) translate(var(--tx), var(--ty)); opacity: 0; }
+    }
+    .cat-burst {
+      position: fixed;
+      pointer-events: none;
+      font-size: 48px;
+      z-index: 1000;
+      animation: catFly 1.5s ease-out forwards;
+    }
+    @keyframes catFly {
+      0% { transform: scale(0.1) rotate(0deg); opacity: 1; }
+      100% { transform: scale(2) rotate(720deg) translate(var(--tx), var(--ty)); opacity: 0; }
+    }
+    .hidden {
+      display: none !important;
+    }
+    #extra-phrase-btn {
+      margin-top: 6px;
+    }
+    /* ===== ТЕМЫ ===== */
+    body.theme-morning .card { border-color: rgba(255, 180, 150, 0.4); }
+    body.theme-morning h1 { color: #e07a5f; }
+    body.theme-morning .sub { color: #c97a5f; }
+    body.theme-morning .counter { color: #d48a6f; border-color: rgba(200, 120, 90, 0.3); }
+    body.theme-morning #phrase-text { color: #d48a6f; }
+    body.theme-morning #maze-container { border-color: rgba(200, 120, 90, 0.3); }
+    body.theme-morning .btn { color: #c97a5f; border-color: rgba(200, 120, 90, 0.2); }
+    body.theme-morning .btn-primary { background: rgba(200, 120, 90, 0.15); border-color: #d48a6f; color: #d48a6f; }
+
+    body.theme-day .card { border-color: rgba(255, 180, 150, 0.5); box-shadow: 0 10px 50px rgba(255, 150, 100, 0.2); }
+    body.theme-day h1 { color: #e08a5f; }
+    body.theme-day .sub { color: #d48a6f; }
+    body.theme-day .counter { color: #d48a6f; border-color: rgba(200, 120, 90, 0.3); }
+    body.theme-day #phrase-text { color: #d48a6f; }
+    body.theme-day #maze-container { border-color: rgba(200, 120, 90, 0.3); }
+    body.theme-day .btn { color: #d48a6f; border-color: rgba(200, 120, 90, 0.2); }
+    body.theme-day .btn-primary { background: rgba(200, 120, 90, 0.15); border-color: #d48a6f; color: #d48a6f; }
+
+    body.theme-evening .card { border-color: rgba(200, 100, 120, 0.4); }
+    body.theme-evening h1 { color: #c95a6f; }
+    body.theme-evening .sub { color: #c95a6f; }
+    body.theme-evening .counter { color: #c95a6f; border-color: rgba(200, 80, 100, 0.3); }
+    body.theme-evening #phrase-text { color: #c95a6f; }
+    body.theme-evening #maze-container { border-color: rgba(200, 80, 100, 0.3); }
+    body.theme-evening .btn { color: #c95a6f; border-color: rgba(200, 80, 100, 0.2); }
+    body.theme-evening .btn-primary { background: rgba(200, 80, 100, 0.15); border-color: #c95a6f; color: #c95a6f; }
+
+    body.theme-night .card { border-color: rgba(180, 120, 200, 0.4); }
+    body.theme-night h1 { color: #b08ac0; }
+    body.theme-night .sub { color: #b08ac0; }
+    body.theme-night .counter { color: #b08ac0; border-color: rgba(150, 100, 180, 0.3); }
+    body.theme-night #phrase-text { color: #b08ac0; }
+    body.theme-night #maze-container { border-color: rgba(150, 100, 180, 0.3); }
+    body.theme-night .btn { color: #b08ac0; border-color: rgba(150, 100, 180, 0.2); }
+    body.theme-night .btn-primary { background: rgba(150, 100, 180, 0.15); border-color: #b08ac0; color: #b08ac0; }
+
+    /* ===== АДАПТАЦИЯ ===== */
+    @media (max-width: 480px) {
+      .card { padding: 20px 16px 26px; border-radius: 36px; }
+      h1 { font-size: 24px; }
+      .sub { font-size: 15px; }
+      .time-line { font-size: 16px; padding: 6px 14px; }
+      #phrase-text { font-size: 18px; }
+      .btn { font-size: 14px; padding: 10px 16px; min-width: 80px; }
+      #reply-block textarea { font-size: 15px; height: 60px; }
+    }
+    @media (max-width: 380px) {
+      h1 { font-size: 20px; }
+      .sub { font-size: 13px; }
+      #phrase-text { font-size: 16px; }
+      .btn { font-size: 13px; padding: 8px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== ФОНОВЫЙ СЛОЙ ===== -->
+<div id="bg-layer"></div>
+
+<!-- ===== КАРТА ===== -->
+<div class="card" id="main-card">
+  <div class="city-line">🌆 Привет из Челябинска!</div>
+  <div class="time-line" id="timeDisplay">🕐 Люблю тебя прямо сейчас: --:--</div>
+  <h1>🐱 ТЫ МОЙ САМЫЙ ЛЮБИМЫЙ КОТИК 🐱</h1>
+  <div class="sub">❤️ Ты — моя самая вкусненькая сладость ❤️</div>
+  <div class="counter" id="loveCounter">💕 Насколько я тебя люблю: 0%</div>
+
+  <!-- ЛАБИРИНТ -->
+  <div id="maze-container">
+    <canvas id="mazeCanvas"></canvas>
+  </div>
+
+  <!-- ФРАЗА -->
+  <div id="phrase-block">
+    <div id="phrase-text">👆 Пройди лабиринт, мой хороший</div>
+    <div class="phrase-small" id="phrase-day"></div>
+  </div>
+
+  <!-- КНОПКИ -->
+  <div class="btn-group" id="action-buttons">
+    <button class="btn btn-primary" id="replyBtn">💬 Написать ей</button>
+    <button class="btn" id="extraPhraseBtn">✨ Ещё фразу</button>
+  </div>
+
+  <!-- БЛОК ОТВЕТА -->
+  <div id="reply-block">
+    <textarea id="replyText" placeholder="Напиши что-нибудь..."></textarea>
+    <button class="btn btn-send" id="sendReplyBtn">📨 Отправить</button>
+  </div>
+
+  <div id="extra-phrase-block" style="margin-top:8px;"></div>
+</div>
+
+<script>
+  // =======================================================
+  // 1. ДАННЫЕ
+  // =======================================================
+  // Дата первой встречи (5 октября 2023)
+  const START_DATE = new Date(2023, 9, 5); // месяц 9 = октябрь
+  // Твой ник в Telegram
+  const YOUR_TG = 'bmw1over';
+
+  // 38 фраз (без 31 и 37)
+  const PHRASES = [
+    // 1-30 (оригинальные, с заменой проблемных пунктов)
+    'Когда я просыпаюсь и думаю о тебе, день сразу становится легче. Ты — первая мысль, и она самая тёплая.',
+    'Ты справляешься, даже когда тяжело. Я знаю это, потому что ты — мой большой и сильный медвежонок. А ещё я знаю, что внутри ты мягкий, как пирожочек.',
+    'Ты смущаешься, когда я говорю что-то про твою внешность. Но я всё равно буду это делать, потому что это правда, а не просто комплимент.',
+    'Твои пухлые губы и милый носик — моя самая большая слабость. Я бесконечно люблю тебя, мой сладкий.',
+    'Когда я смотрю на твои большие лапки, я вспоминаю, как они обнимают меня. Это самое тёплое место на свете, мой зайка.',
+    'Ты — самое необыкновенное сочетание нежности и силы. Я люблю каждую твою родинку и каждый шрамик, потому что это — ты, мой любимый малыш.',
+    'Знаешь, что я сделала сегодня? Посмотрела на твою фотографию и улыбнулась. Ты делаешь меня счастливой просто тем, что существуешь, моя буся.',
+    'Иногда я смотрю на тебя и думаю — как в одном человеке может быть столько тепла. Ты согреваешь даже когда просто сидишь рядом.',
+    'Твои глаза — это тот цвет, от которого я не могу отвести взгляд. Они как шоколад с карамелью, но вкуснее.',
+    'Я иногда вспоминаю, как мы встретились, и не верю, что это вообще случилось. Ты — мой самый неожиданный и лучший сюрприз.',
+    'Я люблю, что ты высокий. Потому что когда мы встречаемся, я могу уткнуться тебе в грудь и просто молчать. Это лучшее место на земле.',
+    'Твои волосы, твои глаза, твои губы — я люблю каждую деталь. Ты собран из всего самого красивого.',
+    'Мне нравится твой рост. Потому что когда ты рядом, я чувствую себя в безопасности, как за каменной стеной. Ты — моя надёжная лапа, моя лапушка.',
+    'Иногда я просто смотрю на тебя и не понимаю, как так вышло, что ты выбрал меня. Но я рада, что это так.',
+    'Ты — тот человек, ради которого я готова на всё. Даже на самые нелепые вещи. Потому что ты — мой самый любимый котеночек.',
+    'Я скучаю по твоим объятиям. Когда ты обнимаешь меня, я забываю про всё. Даже про то, что мы не рядом.',
+    'Ты — мой самый вкусный пирожок. И я хочу целовать тебя каждый день до конца жизни, мой малышонок.',
+    'Ты есть в каждом моём дне. В утреннем кофе, в вечерней тишине, в мыслях перед сном. Ты просто всегда здесь.',
+    'Я люблю твои родинки. Каждая из них — как маленькая звезда на твоей коже. Ты — моё созвездие, мой красивый.',
+    'Ты — моя самая тёплая ночь, мой спокойный вечер и моё самое ясное утро. Ты — всё, мой любимый зайка.',
+    'Твоя улыбка — это лекарство от всех моих печалей. Я готова смотреть на неё вечно, мой котеночек.',
+    'Я могу говорить о тебе очень долго. Но лучшее, что я могу сделать — это просто быть рядом.',
+    'Твои глаза — это шоколад, а твоё сердце — карамель. А я — та, кто хочет есть тебя взглядом каждый день. Люблю тебя, мой сладенький.',
+    'Ты — моя самая любимая игра, моя самая любимая песня, моё самое любимое кино. Ты — моя жизнь, мой малыш.',
+    'Твои объятия — это то, чего мне не хватает больше всего. Иногда я закрываю глаза и вспоминаю, как ты прижимаешь меня к себе.',
+    'Ты — мой самый нежный сон. Я хочу просыпаться рядом с тобой каждый день. Ты — моё счастье, мой зайчик.',
+    'Я люблю твои руки. Они такие большие и тёплые, что рядом с ними я чувствую себя спокойно. Ты мой медвежонок.',
+    'Ты — моя самая красивая мысль. Когда ты рядом, весь мир становится ярче. Ты — моя булочка.',
+    'Ты — мой самый вкусный десерт. Я хочу целовать тебя каждый день до конца жизни, мой пирожочек.',
+    'Ты — мой самый большой и тёплый мишка. Я люблю тебя за то, что ты есть. Ты — моя жизнь, мой котеночек.',
+    // 32-40 (без 31 и 37, которые были удалены)
+    'Иногда я просто смотрю на твоё фото и думаю: боже, какой же ты красивый. И это не просто слова.',
+    'Мне нравится, как ты называешь меня по имени. В твоём голосе это звучит по-другому.',
+    'Я не знаю, как объяснить это чувство, но когда я думаю о тебе, внутри становится легко, как будто я лечу.',
+    'Ты — тот человек, с которым я готова молчать. Потому что даже в тишине нам хорошо.',
+    'Иногда я вспоминаю твой запах. Он остался где-то в моей памяти, и я хочу снова его почувствовать.',
+    'Я скучаю по твоему голосу не потому что ты что-то говоришь, а потому что это просто ты.',
+    'Ты — самое красивое, что случилось со мной за последние годы. И я не преувеличиваю.',
+    'Я хочу, чтобы ты знал: я всегда здесь. Даже когда я молчу, я думаю о тебе.'
+  ];
+
+  // Приветствия по времени суток
+  const GREETINGS = {
+    morning: 'Доброе утро, мой самый красивый медвежонок! Пусть этот день будет тёплым, как твои лапки.',
+    day: 'Привет, мой милый котеночек! Надеюсь, у тебя всё хорошо.',
+    evening: 'Тёплый вечер за окном, и я снова думаю о тебе, мой сладенький зайка.',
+    night: 'Спокойной ночи, мой большой и тёплый мишка. Сладких снов, моя булочка.'
+  };
+
+  // =======================================================
+  // 2. ТЕМЫ ПО ВРЕМЕНИ СУТОК
+  // =======================================================
+  function getTheme(hour) {
+    if (hour >= 6 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 17) return 'day';
+    if (hour >= 17 && hour < 21) return 'evening';
+    return 'night';
+  }
+
+  function applyTheme(theme) {
+    document.body.className = 'theme-' + theme;
+    // Фон
+    const bg = document.getElementById('bg-layer');
+    if (theme === 'morning') {
+      bg.style.background = 'linear-gradient(145deg, #fce4d6, #f8d5c0)';
+    } else if (theme === 'day') {
+      bg.style.background = 'linear-gradient(145deg, #fce4d6, #fad5b8)';
+    } else if (theme === 'evening') {
+      bg.style.background = 'linear-gradient(145deg, #2d1a22, #3d1a2a)';
+    } else { // night
+      bg.style.background = 'linear-gradient(145deg, #0d0a18, #1a0b1f)';
+    }
+    // Обновляем звёзды/сердечки
+    updateBgElements(theme);
+  }
+
+  // =======================================================
+  // 3. ФОНОВЫЕ ЭЛЕМЕНТЫ (сердечки и звёзды)
+  // =======================================================
+  function updateBgElements(theme) {
+    const container = document.getElementById('bg-layer');
+    container.innerHTML = '';
+    const isNight = theme === 'night';
+    const isEvening = theme === 'evening';
+    const count = 30;
+    const emojis = isNight || isEvening ? ['✦', '✧', '·', '⋆', '☆'] : ['❤️', '💖', '💗', '🌸', '✨'];
+
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('span');
+      el.className = isNight || isEvening ? 'bg-star' : 'bg-heart';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = Math.random() * 100 + '%';
+      el.style.top = Math.random() * 100 + '%';
+      el.style.fontSize = (isNight ? 12 : 16) + Math.random() * 20 + 'px';
+      if (isNight || isEvening) {
+        el.style.animationDelay = Math.random() * 5 + 's';
+        el.style.animationDuration = (2 + Math.random() * 3) + 's';
+      } else {
+        el.style.animationDelay = Math.random() * 15 + 's';
+        el.style.animationDuration = (10 + Math.random() * 15) + 's';
+      }
+      container.appendChild(el);
+    }
+  }
+
+  // =======================================================
+  // 4. ЛАБИРИНТ (простой, 5x5)
+  // =======================================================
+  const mazeData = [
+    [0,1,1,1,1],
+    [0,0,0,0,1],
+    [1,1,1,0,1],
+    [1,0,0,0,1],
+    [1,0,1,0,0]
+  ];
+  const mazeSize = 5;
+  let playerPos = { x: 0, y: 0 };
+  let mazeSolved = false;
+  const canvas = document.getElementById('mazeCanvas');
+  const ctx = canvas.getContext('2d');
+  let cellSize = 0;
+
+  function resizeCanvas() {
+    const container = document.getElementById('maze-container');
+    const rect = container.getBoundingClientRect();
+    const size = Math.floor(rect.width);
+    canvas.width = size;
+    canvas.height = size;
+    cellSize = size / mazeSize;
+    drawMaze();
+  }
+
+  function drawMaze() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = canvas.width;
+    const h = canvas.height;
+    const cs = cellSize;
+
+    for (let row = 0; row < mazeSize; row++) {
+      for (let col = 0; col < mazeSize; col++) {
+        const x = col * cs;
+        const y = row * cs;
+        const val = mazeData[row][col];
+        const theme = document.body.className.replace('theme-', '') || 'night';
+        const isDark = theme === 'night' || theme === 'evening';
+        const fill = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+        const stroke = isDark ? 'rgba(255,200,220,0.2)' : 'rgba(0,0,0,0.1)';
+        ctx.fillStyle = val === 0 ? fill : 'rgba(0,0,0,0.2)';
+        ctx.fillRect(x, y, cs, cs);
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, cs, cs);
+      }
+    }
+
+    // Цель (центр)
+    const cx = 2 * cs + cs/2;
+    const cy = 2 * cs + cs/2;
+    const theme = document.body.className.replace('theme-', '') || 'night';
+    const heartColor = (theme === 'morning' || theme === 'day') ? '#d48a6f' : '#ff4d6d';
+    ctx.fillStyle = heartColor;
+    ctx.font = (cs * 0.6) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('❤️', cx, cy);
+
+    // Игрок
+    const px = playerPos.x * cs + cs/2;
+    const py = playerPos.y * cs + cs/2;
+    ctx.fillStyle = '#ffb3c6';
+    ctx.font = (cs * 0.5) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🐾', px, py);
+  }
+
+  // Обработка касаний
+  let touchStartX = 0, touchStartY = 0;
+  let touchStartPlayer = null;
+
+  function handleTouchStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    touchStartX = touch.clientX - rect.left;
+    touchStartY = touch.clientY - rect.top;
+    touchStartPlayer = { ...playerPos };
+  }
+
+  function handleTouchMove(e) {
+    e.preventDefault();
+    if (!touchStartPlayer || mazeSolved) return;
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    const dx = x - touchStartX;
+    const dy = y - touchStartY;
+
+    let newPos = { ...touchStartPlayer };
+    if (Math.abs(dx) > Math.abs(dy)) {
+      newPos.x = dx > 0 ? touchStartPlayer.x + 1 : touchStartPlayer.x - 1;
+    } else {
+      newPos.y = dy > 0 ? touchStartPlayer.y + 1 : touchStartPlayer.y - 1;
+    }
+
+    // Проверка
+    if (newPos.x < 0 || newPos.x >= mazeSize || newPos.y < 0 || newPos.y >= mazeSize) return;
+    if (mazeData[newPos.y][newPos.x] === 1) return;
+
+    playerPos = newPos;
+    drawMaze();
+
+    // Проверка победы
+    if (playerPos.x === 2 && playerPos.y === 2) {
+      mazeSolved = true;
+      showTodayPhrase();
+      playSound('complete');
+      burstHearts(35);
+    }
+  }
+
+  function handleTouchEnd(e) {
+    e.preventDefault();
+    touchStartPlayer = null;
+  }
+
+  // =======================================================
+  // 5. ЗВУК
+  // =======================================================
+  function playSound(type) {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      if (type === 'complete') {
+        osc.frequency.setValueAtTime(523, ctx.currentTime);
+        osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.10, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+      } else {
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        gain.gain.setValueAtTime(0.05, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.2);
+      }
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+    } catch(e) {}
+  }
+
+  // =======================================================
+  // 6. ВЗРЫВЫ
+  // =======================================================
+  function burstHearts(count = 25) {
+    const emojis = ['❤️','💖','💗','💓','🌸','✨','💕','🩷','💋','🔥','🥰','💞','🌟','🧡','💘','🐱','😺','😻'];
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'burst';
+        el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        el.style.left
