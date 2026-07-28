@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Лабиринт для тебя</title>
+  <title>Кликни моё сердце ❤️</title>
   <style>
     * {
       margin: 0;
@@ -69,23 +69,44 @@
       margin: 20px 0 40px;
       transition: border-color 1s ease, box-shadow 1s ease;
     }
-    #maze-container {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      max-width: 340px;
-      margin: 0 auto 14px;
-      touch-action: none;
-      background: rgba(0,0,0,0.1);
-      border-radius: 32px;
-      overflow: hidden;
-      border: 2px solid rgba(255, 150, 180, 0.15);
-      transition: border-color 1s ease;
+    /* ===== КЛИКЕР ===== */
+    #heart-container {
+      width: 180px;
+      height: 180px;
+      margin: 10px auto 16px;
+      position: relative;
+      touch-action: manipulation;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
-    #mazeCanvas {
-      width: 100%;
-      height: 100%;
+    #heart {
+      font-size: 120px;
+      line-height: 1;
+      transition: transform 0.1s ease, text-shadow 0.2s ease;
+      color: #ff4d6d;
+      text-shadow: 0 0 40px rgba(255, 77, 109, 0.3);
+      transform: scale(1);
       display: block;
-      background: transparent;
+      width: 100%;
+      text-align: center;
+    }
+    #heart:active {
+      transform: scale(0.85);
+    }
+    #heart.pulse {
+      animation: pulse 0.3s ease;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    #click-counter {
+      font-size: 20px;
+      font-weight: 600;
+      margin-top: 4px;
+      transition: color 1s ease;
     }
     #phrase-block {
       min-height: 80px;
@@ -94,21 +115,19 @@
       background: rgba(0,0,0,0.12);
       border-radius: 28px;
       border: 1px solid rgba(255, 150, 180, 0.1);
-      transition: border-color 1s ease;
+      transition: border-color 1s ease, background 1s ease;
     }
     #phrase-text {
       font-size: 20px;
       font-weight: 600;
       line-height: 1.5;
-      color: #ffccdd;
       transition: color 1s ease;
     }
     .phrase-small {
       font-size: 14px;
       font-weight: 400;
-      opacity: 0.7;
+      opacity: 0.8;
       margin-top: 6px;
-      color: #ffccdd;
       transition: color 1s ease;
     }
     .btn-group {
@@ -132,7 +151,6 @@
       border: 1px solid rgba(255, 150, 180, 0.15);
       flex: 1 1 auto;
       min-width: 100px;
-      color: #ffccdd;
       transition: all 0.2s ease, background 1s ease, border-color 1s ease, color 1s ease;
     }
     .btn:active {
@@ -157,12 +175,11 @@
       border-radius: 20px;
       border: 1px solid rgba(255, 150, 180, 0.25);
       background: rgba(255,255,255,0.05);
-      color: #ffccdd;
       font-size: 16px;
       font-family: inherit;
       resize: none;
       height: 70px;
-      transition: border-color 1s ease, background 1s ease;
+      transition: border-color 1s ease, background 1s ease, color 1s ease;
     }
     #reply-block textarea:focus {
       outline: none;
@@ -190,19 +207,55 @@
     #day-counter {
       margin-top: 18px;
       font-size: 15px;
-      color: rgba(255, 220, 230, 0.6);
       border-top: 1px solid rgba(255, 150, 180, 0.1);
       padding-top: 16px;
       transition: color 1s ease;
     }
+    /* ===== ТЕМЫ (ЦВЕТ ТЕКСТА) ===== */
+    body.theme-morning #phrase-text { color: #2d1a1a; }
+    body.theme-morning .phrase-small { color: #3d2a1a; }
+    body.theme-morning #click-counter { color: #2d1a1a; }
+    body.theme-morning #day-counter { color: rgba(45, 26, 26, 0.7); }
+    body.theme-morning .btn { color: #2d1a1a; border-color: rgba(45, 26, 26, 0.2); }
+    body.theme-morning .btn-primary { color: #2d1a1a; border-color: #2d1a1a; background: rgba(45, 26, 26, 0.05); }
+    body.theme-morning #reply-block textarea { color: #2d1a1a; }
+
+    body.theme-day #phrase-text { color: #2d1a1a; }
+    body.theme-day .phrase-small { color: #3d2a1a; }
+    body.theme-day #click-counter { color: #2d1a1a; }
+    body.theme-day #day-counter { color: rgba(45, 26, 26, 0.7); }
+    body.theme-day .btn { color: #2d1a1a; border-color: rgba(45, 26, 26, 0.2); }
+    body.theme-day .btn-primary { color: #2d1a1a; border-color: #2d1a1a; background: rgba(45, 26, 26, 0.05); }
+    body.theme-day #reply-block textarea { color: #2d1a1a; }
+
+    body.theme-evening #phrase-text { color: #ffccdd; }
+    body.theme-evening .phrase-small { color: #ffccdd; }
+    body.theme-evening #click-counter { color: #ffccdd; }
+    body.theme-evening #day-counter { color: rgba(255, 204, 221, 0.7); }
+    body.theme-evening .btn { color: #ffccdd; border-color: rgba(255, 204, 221, 0.2); }
+    body.theme-evening .btn-primary { color: #ffccdd; border-color: #ff4d6d; background: rgba(255, 77, 109, 0.15); }
+    body.theme-evening #reply-block textarea { color: #ffccdd; }
+
+    body.theme-night #phrase-text { color: #ffccdd; }
+    body.theme-night .phrase-small { color: #ffccdd; }
+    body.theme-night #click-counter { color: #ffccdd; }
+    body.theme-night #day-counter { color: rgba(255, 204, 221, 0.7); }
+    body.theme-night .btn { color: #ffccdd; border-color: rgba(255, 204, 221, 0.2); }
+    body.theme-night .btn-primary { color: #ffccdd; border-color: #ff4d6d; background: rgba(255, 77, 109, 0.15); }
+    body.theme-night #reply-block textarea { color: #ffccdd; }
+
     @media (max-width: 480px) {
       .card { padding: 20px 16px 26px; border-radius: 36px; }
+      #heart { font-size: 100px; }
+      #heart-container { width: 150px; height: 150px; }
       #phrase-text { font-size: 18px; }
       .btn { font-size: 14px; padding: 10px 16px; min-width: 80px; }
       #celestial { font-size: 36px; top: 16px; right: 16px; }
       #day-counter { font-size: 13px; }
     }
     @media (max-width: 380px) {
+      #heart { font-size: 80px; }
+      #heart-container { width: 120px; height: 120px; }
       #phrase-text { font-size: 16px; }
       .btn { font-size: 13px; padding: 8px 12px; }
       #celestial { font-size: 30px; top: 12px; right: 12px; }
@@ -216,15 +269,19 @@
 <div id="celestial"></div>
 
 <div class="card">
-  <div id="maze-container">
-    <canvas id="mazeCanvas"></canvas>
+  <!-- СЕРДЦЕ-КЛИКЕР -->
+  <div id="heart-container">
+    <div id="heart">❤️</div>
   </div>
+  <div id="click-counter">Нажми на сердце ❤️</div>
 
+  <!-- ФРАЗА -->
   <div id="phrase-block">
-    <div id="phrase-text">👆 Проведи пальцем до сердечка</div>
+    <div id="phrase-text">👆 Нажми на сердечко 10 раз</div>
     <div class="phrase-small" id="phrase-day"></div>
   </div>
 
+  <!-- КНОПКИ -->
   <div class="btn-group">
     <button class="btn btn-primary" id="replyBtn">💬 Написать мне</button>
     <button class="btn" id="extraPhraseBtn">✨ Ещё фразу</button>
@@ -235,7 +292,6 @@
     <button class="btn btn-send" id="sendReplyBtn">📨 Отправить</button>
   </div>
 
-  <!-- СЧЁТЧИК ДНЕЙ -->
   <div id="day-counter">❤️ С того дня, как я тебя увидела, прошло 0 дней</div>
 </div>
 
@@ -302,6 +358,8 @@
   function applyTheme(theme) {
     const bg = document.getElementById('bg-layer');
     const celestial = document.getElementById('celestial');
+    document.body.className = 'theme-' + theme;
+
     if (theme === 'morning') {
       bg.style.background = 'linear-gradient(145deg, #fce4d6, #f8d5c0)';
       celestial.textContent = '☀️';
@@ -355,124 +413,80 @@
   }
 
   // =======================================================
-  // 4. ЛАБИРИНТ
+  // 4. КЛИКЕР
   // =======================================================
-  const mazeData = [
-    [0, 1, 0],
-    [0, 0, 0],
-    [0, 1, 0]
-  ];
-  const mazeSize = 3;
-  let playerPos = { x: 0, y: 0 };
-  let mazeSolved = false;
-  const canvas = document.getElementById('mazeCanvas');
-  const ctx = canvas.getContext('2d');
-  let cellSize = 0;
+  let clickCount = 0;
+  const TARGET_CLICKS = 10;
+  const heart = document.getElementById('heart');
+  const clickCounter = document.getElementById('click-counter');
+  const phraseText = document.getElementById('phrase-text');
+  const phraseDay = document.getElementById('phrase-day');
 
-  function resizeCanvas() {
-    const container = document.getElementById('maze-container');
-    const rect = container.getBoundingClientRect();
-    const size = Math.floor(rect.width);
-    canvas.width = size;
-    canvas.height = size;
-    cellSize = size / mazeSize;
-    drawMaze();
+  // Загрузка сохранённого счётчика (если он закрыл и открыл сайт)
+  let savedClicks = localStorage.getItem('clickCount');
+  if (savedClicks !== null) {
+    clickCount = parseInt(savedClicks, 10) || 0;
   }
+  updateCounterDisplay();
 
-  function drawMaze() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const cs = cellSize;
-    const theme = document.body.className.replace('theme-', '') || 'night';
-    const isDark = (theme === 'night' || theme === 'evening');
-    const fillLight = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-    const fillWall = isDark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.15)';
-    const stroke = isDark ? 'rgba(255,200,220,0.15)' : 'rgba(0,0,0,0.08)';
-
-    for (let row = 0; row < mazeSize; row++) {
-      for (let col = 0; col < mazeSize; col++) {
-        const x = col * cs;
-        const y = row * cs;
-        const val = mazeData[row][col];
-        ctx.fillStyle = val === 0 ? fillLight : fillWall;
-        ctx.fillRect(x, y, cs, cs);
-        ctx.strokeStyle = stroke;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, cs, cs);
-      }
-    }
-
-    const cx = 1 * cs + cs/2;
-    const cy = 1 * cs + cs/2;
-    const heartColor = (theme === 'morning' || theme === 'day') ? '#e07a5f' : '#ff4d6d';
-    ctx.fillStyle = heartColor;
-    ctx.font = (cs * 0.7) + 'px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('❤️', cx, cy);
-
-    const px = playerPos.x * cs + cs/2;
-    const py = playerPos.y * cs + cs/2;
-    ctx.fillStyle = (theme === 'morning' || theme === 'day') ? '#d48a6f' : '#ffb3c6';
-    ctx.font = (cs * 0.5) + 'px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🐾', px, py);
-  }
-
-  let touchStartX = 0, touchStartY = 0;
-  let touchStartPlayer = null;
-
-  function handleTouchStart(e) {
+  heart.addEventListener('click', function(e) {
     e.preventDefault();
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    touchStartX = touch.clientX - rect.left;
-    touchStartY = touch.clientY - rect.top;
-    touchStartPlayer = { ...playerPos };
-  }
+    // Анимация нажатия
+    this.classList.remove('pulse');
+    void this.offsetWidth;
+    this.classList.add('pulse');
 
-  function handleTouchMove(e) {
-    e.preventDefault();
-    if (!touchStartPlayer || mazeSolved) return;
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
-    const dx = x - touchStartX;
-    const dy = y - touchStartY;
+    clickCount++;
+    localStorage.setItem('clickCount', clickCount);
+    updateCounterDisplay();
 
-    let newPos = { ...touchStartPlayer };
-    if (Math.abs(dx) > Math.abs(dy)) {
-      newPos.x = dx > 0 ? touchStartPlayer.x + 1 : touchStartPlayer.x - 1;
-    } else {
-      newPos.y = dy > 0 ? touchStartPlayer.y + 1 : touchStartPlayer.y - 1;
-    }
-
-    if (newPos.x < 0 || newPos.x >= mazeSize || newPos.y < 0 || newPos.y >= mazeSize) return;
-    if (mazeData[newPos.y][newPos.x] === 1) return;
-
-    playerPos = newPos;
-    drawMaze();
-
-    if (playerPos.x === 1 && playerPos.y === 1) {
-      mazeSolved = true;
+    // Если достигли цели
+    if (clickCount >= TARGET_CLICKS) {
       showTodayPhrase();
       burstHearts(30);
+      clickCount = 0;
+      localStorage.setItem('clickCount', 0);
+      updateCounterDisplay();
+    }
+  });
+
+  function updateCounterDisplay() {
+    const remaining = TARGET_CLICKS - clickCount;
+    if (remaining > 0) {
+      clickCounter.textContent = `❤️ Осталось ${remaining} нажатий до фразы`;
+    } else {
+      clickCounter.textContent = '❤️ Ты нажал на моё сердце!';
     }
   }
 
-  function handleTouchEnd(e) {
-    e.preventDefault();
-    touchStartPlayer = null;
+  // =======================================================
+  // 5. ФРАЗЫ
+  // =======================================================
+  function getDayIndex() {
+    const now = new Date();
+    const start = new Date(2023, 9, 5);
+    const diff = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+    return diff % PHRASES.length;
   }
 
-  canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-  canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-  canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-  window.addEventListener('resize', resizeCanvas);
+  function showTodayPhrase() {
+    const idx = getDayIndex();
+    phraseText.textContent = PHRASES[idx];
+    phraseDay.textContent = '❤️ Твоя фраза на сегодня';
+    // Подсветка блока
+    document.getElementById('phrase-block').style.borderColor = 'rgba(255, 77, 109, 0.4)';
+  }
+
+  // Показать фразу, если пользователь уже набрал 10 кликов до обновления
+  if (clickCount >= TARGET_CLICKS) {
+    showTodayPhrase();
+    clickCount = 0;
+    localStorage.setItem('clickCount', 0);
+    updateCounterDisplay();
+  }
 
   // =======================================================
-  // 5. ВЗРЫВЫ
+  // 6. ВЗРЫВЫ
   // =======================================================
   function burstHearts(count) {
     const emojis = ['❤️','💖','💗','💓','🌸','✨','💕','🩷','💋','🥰','💞','🌟','🧡','💘','🐱','😺'];
@@ -493,22 +507,6 @@
   }
 
   // =======================================================
-  // 6. ФРАЗЫ
-  // =======================================================
-  function getDayIndex() {
-    const now = new Date();
-    const start = new Date(2023, 9, 5);
-    const diff = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-    return diff % PHRASES.length;
-  }
-
-  function showTodayPhrase() {
-    const idx = getDayIndex();
-    document.getElementById('phrase-text').textContent = PHRASES[idx];
-    document.getElementById('phrase-day').textContent = '❤️ Твоя фраза на сегодня';
-  }
-
-  // =======================================================
   // 7. СЧЁТЧИК ДНЕЙ
   // =======================================================
   function updateDayCounter() {
@@ -525,14 +523,11 @@
   // =======================================================
   let extraIndex = 0;
   document.getElementById('extraPhraseBtn').addEventListener('click', function() {
-    if (!mazeSolved) {
-      document.getElementById('phrase-text').textContent = '👆 Сначала пройди лабиринт!';
-      return;
-    }
     extraIndex = (extraIndex + 1) % PHRASES.length;
     if (extraIndex === getDayIndex()) extraIndex = (extraIndex + 1) % PHRASES.length;
-    document.getElementById('phrase-text').textContent = PHRASES[extraIndex];
-    document.getElementById('phrase-day').textContent = '✨ Ещё одна фраза для тебя';
+    phraseText.textContent = PHRASES[extraIndex];
+    phraseDay.textContent = '✨ Ещё одна фраза для тебя';
+    document.getElementById('phrase-block').style.borderColor = 'rgba(255, 150, 180, 0.4)';
     burstHearts(15);
   });
 
@@ -545,7 +540,7 @@
   document.getElementById('sendReplyBtn').addEventListener('click', function() {
     const text = document.getElementById('replyText').value.trim();
     if (!text) return;
-    const full = text + ' (отправлено через лабиринт ❤️)';
+    const full = text + ' (отправлено через сердечко ❤️)';
     navigator.clipboard.writeText(full).then(() => {
       window.open('https://t.me/' + YOUR_TG, '_blank');
       document.getElementById('replyText').value = '';
@@ -560,15 +555,9 @@
   const now = new Date();
   const hours = now.getHours();
   const theme = getTimeTheme(hours);
-  document.body.className = 'theme-' + theme;
   applyTheme(theme);
-  resizeCanvas();
 
-  playerPos = { x: 0, y: 0 };
-  mazeSolved = false;
-  drawMaze();
-
-  console.log('🌞 Лабиринт с солнцем и счётчиком загружен!');
+  console.log('❤️ Кликер с сердечком загружен!');
 </script>
 </body>
 </html>
