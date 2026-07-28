@@ -69,7 +69,6 @@
       margin: 20px 0 40px;
       transition: border-color 1s ease, box-shadow 1s ease;
     }
-    /* ===== ВЕРХНЯЯ ПЛАНКА С МИШКОЙ ===== */
     .top-bar {
       display: flex;
       align-items: center;
@@ -81,7 +80,6 @@
       line-height: 1;
       transition: color 1s ease;
     }
-    /* ===== КЛИКЕР ===== */
     #heart-container {
       width: 180px;
       height: 180px;
@@ -223,7 +221,6 @@
       padding-top: 16px;
       transition: color 1s ease;
     }
-    /* ===== ТЕМЫ ===== */
     body.theme-morning #phrase-text { color: #2d1a1a; }
     body.theme-morning .phrase-small { color: #3d2a1a; }
     body.theme-morning #click-counter { color: #2d1a1a; }
@@ -287,24 +284,20 @@
 <div id="celestial"></div>
 
 <div class="card">
-  <!-- ВЕРХНЯЯ ПЛАНКА С МИШКОЙ -->
   <div class="top-bar">
     <span class="bear">🧸</span>
   </div>
 
-  <!-- СЕРДЦЕ-КЛИКЕР -->
   <div id="heart-container">
     <div id="heart">❤️</div>
   </div>
   <div id="click-counter">Нажми на сердце ❤️</div>
 
-  <!-- ФРАЗА -->
   <div id="phrase-block">
     <div id="phrase-text">👆 Нажми на сердечко 10 раз</div>
     <div class="phrase-small" id="phrase-day"></div>
   </div>
 
-  <!-- КНОПКИ -->
   <div class="btn-group">
     <button class="btn btn-primary" id="replyBtn">💬 Написать мне</button>
   </div>
@@ -324,7 +317,7 @@
   const YOUR_TG = 'bmw1over';
 
   // =======================================================
-  // 2. ТВОИ ФРАЗЫ (50 ШТУК, В ТОЧНОСТИ КАК ТЫ НАПИСАЛА)
+  // 2. ТВОИ ФРАЗЫ (50 ШТУК)
   // =======================================================
   const PHRASES = [
     'Чмок чмок чмок сегодня ты получил свою порцию целовашек, люблю тебя',
@@ -368,7 +361,7 @@
     'Иногда у меня опускаются руки и я ничего не хочу. Но я знаю, что ты бы никогда не слался. Я хочу быть лучшей для тебя.',
     'Ты мой котик, я бы гладила тебя 24/7 и даже не устала.',
     'Я хочу целовать тебя в твой милый носик, даже если ты будешь беситься(',
-    'Отправляю тебе самые крепки виртуальные обнимашки, я ткбя очень люблю.',
+    'Отправляю тебя самые крепки виртуальные обнимашки, я ткбя очень люблю.',
     'Я хочу, чтобы ты знал: я всегда здесь. Даже когда я молчу, я думаю о тебе.',
     'Мне всегда будет важно выспался ли ты, поел ли и как твоё настроение.',
     'Спасибо за то, что ты однажды появился в моей жизни!',
@@ -380,7 +373,63 @@
   ];
 
   // =======================================================
-  // 3. ОФОРМЛЕНИЕ В ЗАВИСИМОСТИ ОТ ВРЕМЕНИ
+  // 3. ЗВУКИ (СИНТЕЗИРОВАННЫЕ В БРАУЗЕРЕ)
+  // =======================================================
+  let audioCtx = null;
+
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+
+  function playSound(type) {
+    try {
+      initAudio();
+      const now = audioCtx.currentTime;
+
+      if (type === 'heartbeat') {
+        // Два коротких удара
+        playBeep(80, 0.08, now);
+        playBeep(80, 0.08, now + 0.12);
+      } else if (type === 'approach') {
+        // Повышающийся тон
+        const freq = 600 + Math.random() * 200;
+        playBeep(freq, 0.1, now);
+      } else if (type === 'win') {
+        // Маленькая радостная мелодия
+        playBeep(523, 0.1, now);
+        playBeep(659, 0.1, now + 0.12);
+        playBeep(784, 0.1, now + 0.24);
+        playBeep(1047, 0.15, now + 0.38);
+      }
+    } catch (e) {
+      // Звук не работает — просто игнорируем
+    }
+  }
+
+  function playBeep(freq, duration, startTime) {
+    if (!audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.10, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    } catch (e) {}
+  }
+
+  // Разблокировка звука при первом касании
+  document.addEventListener('touchstart', initAudio, { once: true });
+  document.addEventListener('click', initAudio, { once: true });
+
+  // =======================================================
+  // 4. ОФОРМЛЕНИЕ ПО ВРЕМЕНИ
   // =======================================================
   function getTimeTheme(hours) {
     if (hours >= 6 && hours < 12) return 'morning';
@@ -447,23 +496,21 @@
   }
 
   // =======================================================
-  // 4. КЛИКЕР + АВТОПОДСТАНОВКА ФРАЗ (ПО ПОРЯДКУ, ЦИКЛИЧНО)
+  // 5. КЛИКЕР
   // =======================================================
   let clickCount = 0;
   const TARGET_CLICKS = 10;
-  let phraseIndex = 0; // текущий индекс фразы
+  let phraseIndex = 0;
   const heart = document.getElementById('heart');
   const clickCounter = document.getElementById('click-counter');
   const phraseText = document.getElementById('phrase-text');
   const phraseDay = document.getElementById('phrase-day');
 
-  // Загрузка сохранённых данных
   let savedClicks = localStorage.getItem('clickCount');
   let savedPhraseIndex = localStorage.getItem('phraseIndex');
   if (savedClicks !== null) clickCount = parseInt(savedClicks, 10) || 0;
   if (savedPhraseIndex !== null) phraseIndex = parseInt(savedPhraseIndex, 10) || 0;
 
-  // Если фраза уже должна быть показана (при обновлении)
   if (clickCount >= TARGET_CLICKS) {
     showPhrase(phraseIndex);
     phraseIndex = (phraseIndex + 1) % PHRASES.length;
@@ -476,6 +523,8 @@
 
   heart.addEventListener('click', function(e) {
     e.preventDefault();
+    initAudio();
+
     this.classList.remove('pulse');
     void this.offsetWidth;
     this.classList.add('pulse');
@@ -484,14 +533,19 @@
     localStorage.setItem('clickCount', clickCount);
     updateCounterDisplay();
 
+    // ЗВУКИ В ЗАВИСИМОСТИ ОТ КЛИКА
+    if (clickCount <= 5) {
+      playSound('heartbeat');
+    } else if (clickCount < 10) {
+      playSound('approach');
+    }
+
     if (clickCount >= TARGET_CLICKS) {
-      // Показываем текущую фразу
+      playSound('win');
       showPhrase(phraseIndex);
       burstHearts(30);
-      // Переходим к следующей фразе (циклично)
       phraseIndex = (phraseIndex + 1) % PHRASES.length;
       localStorage.setItem('phraseIndex', phraseIndex);
-      // Сбрасываем клики
       clickCount = 0;
       localStorage.setItem('clickCount', 0);
       updateCounterDisplay();
@@ -515,7 +569,7 @@
   }
 
   // =======================================================
-  // 5. ВЗРЫВЫ
+  // 6. ВЗРЫВЫ
   // =======================================================
   function burstHearts(count) {
     const emojis = ['❤️','💖','💗','💓','🌸','✨','💕','🩷','💋','🥰','💞','🌟','🧡','💘','🐱','😺'];
@@ -536,7 +590,7 @@
   }
 
   // =======================================================
-  // 6. СЧЁТЧИК ДНЕЙ
+  // 7. СЧЁТЧИК ДНЕЙ
   // =======================================================
   function updateDayCounter() {
     const start = new Date(2023, 9, 5);
@@ -548,7 +602,7 @@
   updateDayCounter();
 
   // =======================================================
-  // 7. КНОПКИ
+  // 8. КНОПКИ
   // =======================================================
   document.getElementById('replyBtn').addEventListener('click', function() {
     const block = document.getElementById('reply-block');
@@ -569,14 +623,14 @@
   });
 
   // =======================================================
-  // 8. ЗАПУСК
+  // 9. ЗАПУСК
   // =======================================================
   const now = new Date();
   const hours = now.getHours();
   const theme = getTimeTheme(hours);
   applyTheme(theme);
 
-  console.log('🧸 Финальная версия с мишкой и 50 фразами загружена!');
+  console.log('🧸 Финальная версия со звуками загружена!');
 </script>
 </body>
 </html>
