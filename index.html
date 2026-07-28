@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Кликни моё сердце ❤️</title>
+  <title>Сердечко для тебя ❤️</title>
   <style>
     * {
       margin: 0;
@@ -68,6 +68,18 @@
       z-index: 2;
       margin: 20px 0 40px;
       transition: border-color 1s ease, box-shadow 1s ease;
+    }
+    /* ===== ЛЮБОВНАЯ НАДПИСЬ В УГЛУ ===== */
+    .love-corner {
+      position: absolute;
+      bottom: 12px;
+      left: 18px;
+      font-size: 15px;
+      font-weight: 400;
+      opacity: 0.6;
+      transition: color 1s ease;
+      pointer-events: none;
+      z-index: 10;
     }
     /* ===== КЛИКЕР ===== */
     #heart-container {
@@ -216,6 +228,7 @@
     body.theme-morning .phrase-small { color: #3d2a1a; }
     body.theme-morning #click-counter { color: #2d1a1a; }
     body.theme-morning #day-counter { color: rgba(45, 26, 26, 0.7); }
+    body.theme-morning .love-corner { color: #2d1a1a; }
     body.theme-morning .btn { color: #2d1a1a; border-color: rgba(45, 26, 26, 0.2); }
     body.theme-morning .btn-primary { color: #2d1a1a; border-color: #2d1a1a; background: rgba(45, 26, 26, 0.05); }
     body.theme-morning #reply-block textarea { color: #2d1a1a; }
@@ -224,6 +237,7 @@
     body.theme-day .phrase-small { color: #3d2a1a; }
     body.theme-day #click-counter { color: #2d1a1a; }
     body.theme-day #day-counter { color: rgba(45, 26, 26, 0.7); }
+    body.theme-day .love-corner { color: #2d1a1a; }
     body.theme-day .btn { color: #2d1a1a; border-color: rgba(45, 26, 26, 0.2); }
     body.theme-day .btn-primary { color: #2d1a1a; border-color: #2d1a1a; background: rgba(45, 26, 26, 0.05); }
     body.theme-day #reply-block textarea { color: #2d1a1a; }
@@ -232,6 +246,7 @@
     body.theme-evening .phrase-small { color: #ffccdd; }
     body.theme-evening #click-counter { color: #ffccdd; }
     body.theme-evening #day-counter { color: rgba(255, 204, 221, 0.7); }
+    body.theme-evening .love-corner { color: #ffccdd; }
     body.theme-evening .btn { color: #ffccdd; border-color: rgba(255, 204, 221, 0.2); }
     body.theme-evening .btn-primary { color: #ffccdd; border-color: #ff4d6d; background: rgba(255, 77, 109, 0.15); }
     body.theme-evening #reply-block textarea { color: #ffccdd; }
@@ -240,6 +255,7 @@
     body.theme-night .phrase-small { color: #ffccdd; }
     body.theme-night #click-counter { color: #ffccdd; }
     body.theme-night #day-counter { color: rgba(255, 204, 221, 0.7); }
+    body.theme-night .love-corner { color: #ffccdd; }
     body.theme-night .btn { color: #ffccdd; border-color: rgba(255, 204, 221, 0.2); }
     body.theme-night .btn-primary { color: #ffccdd; border-color: #ff4d6d; background: rgba(255, 77, 109, 0.15); }
     body.theme-night #reply-block textarea { color: #ffccdd; }
@@ -252,6 +268,7 @@
       .btn { font-size: 14px; padding: 10px 16px; min-width: 80px; }
       #celestial { font-size: 36px; top: 16px; right: 16px; }
       #day-counter { font-size: 13px; }
+      .love-corner { font-size: 13px; bottom: 8px; left: 14px; }
     }
     @media (max-width: 380px) {
       #heart { font-size: 80px; }
@@ -260,6 +277,7 @@
       .btn { font-size: 13px; padding: 8px 12px; }
       #celestial { font-size: 30px; top: 12px; right: 12px; }
       #day-counter { font-size: 12px; }
+      .love-corner { font-size: 12px; bottom: 6px; left: 12px; }
     }
   </style>
 </head>
@@ -269,6 +287,9 @@
 <div id="celestial"></div>
 
 <div class="card">
+  <!-- НАДПИСЬ В УГЛУ -->
+  <div class="love-corner">❤️ Я люблю тебя</div>
+
   <!-- СЕРДЦЕ-КЛИКЕР -->
   <div id="heart-container">
     <div id="heart">❤️</div>
@@ -284,7 +305,6 @@
   <!-- КНОПКИ -->
   <div class="btn-group">
     <button class="btn btn-primary" id="replyBtn">💬 Написать мне</button>
-    <button class="btn" id="extraPhraseBtn">✨ Ещё фразу</button>
   </div>
 
   <div id="reply-block">
@@ -413,25 +433,26 @@
   }
 
   // =======================================================
-  // 4. КЛИКЕР
+  // 4. КЛИКЕР + АВТОПОДСТАНОВКА ФРАЗ (ЦИКЛИЧНО)
   // =======================================================
   let clickCount = 0;
   const TARGET_CLICKS = 10;
+  let phraseIndex = 0; // текущий индекс фразы
   const heart = document.getElementById('heart');
   const clickCounter = document.getElementById('click-counter');
   const phraseText = document.getElementById('phrase-text');
   const phraseDay = document.getElementById('phrase-day');
 
-  // Загрузка сохранённого счётчика (если он закрыл и открыл сайт)
+  // Загрузка сохранённых данных
   let savedClicks = localStorage.getItem('clickCount');
-  if (savedClicks !== null) {
-    clickCount = parseInt(savedClicks, 10) || 0;
-  }
+  let savedPhraseIndex = localStorage.getItem('phraseIndex');
+  if (savedClicks !== null) clickCount = parseInt(savedClicks, 10) || 0;
+  if (savedPhraseIndex !== null) phraseIndex = parseInt(savedPhraseIndex, 10) || 0;
+
   updateCounterDisplay();
 
   heart.addEventListener('click', function(e) {
     e.preventDefault();
-    // Анимация нажатия
     this.classList.remove('pulse');
     void this.offsetWidth;
     this.classList.add('pulse');
@@ -440,10 +461,14 @@
     localStorage.setItem('clickCount', clickCount);
     updateCounterDisplay();
 
-    // Если достигли цели
     if (clickCount >= TARGET_CLICKS) {
-      showTodayPhrase();
+      // Показываем текущую фразу
+      showPhrase(phraseIndex);
       burstHearts(30);
+      // Переходим к следующей фразе (циклично)
+      phraseIndex = (phraseIndex + 1) % PHRASES.length;
+      localStorage.setItem('phraseIndex', phraseIndex);
+      // Сбрасываем клики
       clickCount = 0;
       localStorage.setItem('clickCount', 0);
       updateCounterDisplay();
@@ -459,34 +484,25 @@
     }
   }
 
-  // =======================================================
-  // 5. ФРАЗЫ
-  // =======================================================
-  function getDayIndex() {
-    const now = new Date();
-    const start = new Date(2023, 9, 5);
-    const diff = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-    return diff % PHRASES.length;
-  }
-
-  function showTodayPhrase() {
-    const idx = getDayIndex();
-    phraseText.textContent = PHRASES[idx];
-    phraseDay.textContent = '❤️ Твоя фраза на сегодня';
-    // Подсветка блока
+  function showPhrase(index) {
+    const phrase = PHRASES[index];
+    phraseText.textContent = phrase;
+    phraseDay.textContent = `❤️ Твоя фраза (${index + 1}/${PHRASES.length})`;
     document.getElementById('phrase-block').style.borderColor = 'rgba(255, 77, 109, 0.4)';
   }
 
-  // Показать фразу, если пользователь уже набрал 10 кликов до обновления
+  // Если после обновления страницы счётчик уже достиг цели (редкий случай)
   if (clickCount >= TARGET_CLICKS) {
-    showTodayPhrase();
+    showPhrase(phraseIndex);
+    phraseIndex = (phraseIndex + 1) % PHRASES.length;
+    localStorage.setItem('phraseIndex', phraseIndex);
     clickCount = 0;
     localStorage.setItem('clickCount', 0);
     updateCounterDisplay();
   }
 
   // =======================================================
-  // 6. ВЗРЫВЫ
+  // 5. ВЗРЫВЫ
   // =======================================================
   function burstHearts(count) {
     const emojis = ['❤️','💖','💗','💓','🌸','✨','💕','🩷','💋','🥰','💞','🌟','🧡','💘','🐱','😺'];
@@ -507,7 +523,7 @@
   }
 
   // =======================================================
-  // 7. СЧЁТЧИК ДНЕЙ
+  // 6. СЧЁТЧИК ДНЕЙ
   // =======================================================
   function updateDayCounter() {
     const start = new Date(2023, 9, 5);
@@ -519,18 +535,8 @@
   updateDayCounter();
 
   // =======================================================
-  // 8. КНОПКИ
+  // 7. КНОПКИ
   // =======================================================
-  let extraIndex = 0;
-  document.getElementById('extraPhraseBtn').addEventListener('click', function() {
-    extraIndex = (extraIndex + 1) % PHRASES.length;
-    if (extraIndex === getDayIndex()) extraIndex = (extraIndex + 1) % PHRASES.length;
-    phraseText.textContent = PHRASES[extraIndex];
-    phraseDay.textContent = '✨ Ещё одна фраза для тебя';
-    document.getElementById('phrase-block').style.borderColor = 'rgba(255, 150, 180, 0.4)';
-    burstHearts(15);
-  });
-
   document.getElementById('replyBtn').addEventListener('click', function() {
     const block = document.getElementById('reply-block');
     block.style.display = block.style.display === 'flex' ? 'none' : 'flex';
@@ -550,14 +556,14 @@
   });
 
   // =======================================================
-  // 9. ЗАПУСК
+  // 8. ЗАПУСК
   // =======================================================
   const now = new Date();
   const hours = now.getHours();
   const theme = getTimeTheme(hours);
   applyTheme(theme);
 
-  console.log('❤️ Кликер с сердечком загружен!');
+  console.log('❤️ Кликер с автоподстановкой фраз загружен!');
 </script>
 </body>
 </html>
